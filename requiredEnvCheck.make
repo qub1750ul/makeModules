@@ -1,8 +1,8 @@
 # requiredEnvCheck
-# A pair of callable functions to stop make if required environment variables
+# A make library that allows to stop make if required environment variables
 # are unset
 #
-# Copyright (C) 2019 Giuseppe Masino ( qub1750ul ) <dev.gmasino@protonmail.com>
+# Copyright (C) 2021 Giuseppe Masino ( qub1750ul ) <dev.gmasino@pm.me>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"),
@@ -22,5 +22,25 @@
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 # OR OTHER DEALINGS IN THE SOFTWARE.
 
-requiredEnvCheck_check_single = $(if $($(1)),,$(error Required variable '$(1)' is not set))
-requiredEnvCheck_check = $(foreach var,$(1),$(call requiredEnvCheck_check_single,$(var)))
+ifeq ($(requiredEnvCheck_version),)
+
+# Current version of this module
+requiredEnvCheck_version := v1.0.0
+
+requiredEnvCheck_single = $(if $($(1)),,$(eval requiredEnvCheck_found_unset += $(1)))
+requiredEnvCheck_list   = $(foreach var,$(1),$(call requiredEnvCheck_single,$(var)))
+requiredEnvCheck_report = $(foreach var,$(requiredEnvCheck_found_unset),$(warning Required variable '$(var)' is not set))
+
+##
+# Checks if specified variables are set ;
+# if they're not, throw an error specifiyng what's wrong
+#
+# @param 1 list of variables to check
+define requiredEnvCheck =
+  $(eval requiredEnvCheck_found_unset :=)
+  $(call requiredEnvCheck_list,$(1))
+  $(call requiredEnvCheck_report)
+  $(if $(requiredEnvCheck_found_unset),$(error Incomplete environment detected))
+endef
+
+endif # ifeq ($(requiredEnvCheck_version),)
